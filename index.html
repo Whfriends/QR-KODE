@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Pembayaran</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .qr-image {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 0 auto;
+            display: block;
+            transition: all 0.3s ease;
+        }
+        
+        .custom-text-container {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .custom-text {
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+        
+        .admin-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-btn:hover {
+            background-color: #2d3748;
+            transform: rotate(90deg);
+        }
+        
+        .admin-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .admin-content {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .admin-content h2 {
+            margin-bottom: 20px;
+            color: #2d3748;
+            text-align: center;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            color: #4299e1;
+            border-bottom: 3px solid #4299e1;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus, .input-group textarea:focus {
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+            outline: none;
+        }
+        
+        .input-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .color-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background-color: #4299e1;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3182ce;
+        }
+        
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #cbd5e0;
+        }
+        
+        .btn-danger {
+            background-color: #f56565;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #e53e3e;
+        }
+        
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background-color: #48bb78;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background-color: #f56565;
+        }
+        
+        .file-input-container {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-container input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 12px 15px;
+            background-color: #edf2f7;
+            border: 1px dashed #cbd5e0;
+            border-radius: 8px;
+            text-align: center;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-input-label:hover {
+            background-color: #e2e8f0;
+            border-color: #a0aec0;
+        }
+        
+        .preview-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .text-preview {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="admin-btn" id="adminBtn">⚙️</button>
+        <img id="qrImage" class="qr-image" src="" alt="QR Code Pembayaran">
+        <div id="customTextContainer" class="custom-text-container">
+            <div id="customText" class="custom-text"></div>
+        </div>
+    </div>
+    
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-content">
+            <h2>Panel Admin</h2>
+            <div class="input-group">
+                <label for="adminKey">Kunci Admin</label>
+                <input type="password" id="adminKey" placeholder="Masukkan kunci admin">
+            </div>
+            <div id="adminControls" style="display: none;">
+                <div class="tab-container">
+                    <div class="tab active" data-tab="image">Ubah Gambar</div>
+                    <div class="tab" data-tab="text">Teks Kustom</div>
+                </div>
+                
+                <div id="tabImage" class="tab-content active">
+                    <div class="input-group">
+                        <label for="qrImageUpload">Unggah Gambar QR Baru</label>
+                        <div class="file-input-container">
+                            <input type="file" id="qrImageUpload" accept="image/*">
+                            <div class="file-input-label">Pilih File Gambar</div>
+                        </div>
+                    </div>
+                    <div class="preview-container">
+                        <img id="previewImage" class="preview-image" alt="Pratinjau Gambar">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" id="closeAdminPanel">Tutup</button>
+                        <button class="btn btn-primary" id="saveImage">Simpan Gambar</button>
+                    </div>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button class="btn btn-danger" id="resetImage">Reset ke Gambar Default</button>
+                    </div>
+                </div>
+                
+                <div id="tabText" class="tab-content">
+                    <div class="input-group">
+                        <label for="customTextInput">Teks Kustom</label>
+                        <textarea id="customTextInput" placeholder="Masukkan teks yang ingin ditampilkan"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="textColor">Warna Teks</label>
+                        <div style="display: flex; align-items: center;">
+                            <input type="color" id="textColor" value="#000000">
+                            <div id="textColorPreview" class="color-preview"></div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="bgColor">Warna Latar Belakang</label>
+                        <div style="display: flex; align-items: center;">
+                            <input type="color" id="bgColor" value="#ffffff">
+                            <div id="bgColorPreview" class="color-preview"></div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="fontSize">Ukuran Font (px)</label>
+                        <input type="number" id="fontSize" min="12" max="36" value="16">
+                    </div>
+                    <div class="input-group">
+                        <label>Pratinjau Teks</label>
+                        <div id="textPreview" class="text-preview">
+                            Teks akan muncul di sini
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" id="closeAdminPanel2">Tutup</button>
+                        <button class="btn btn-primary" id="saveText">Simpan Teks</button>
+                    </div>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button class="btn btn-danger" id="resetText">Hapus Teks</button>
+                    </div>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="cancelAdmin">Batal</button>
+                <button class="btn btn-primary" id="loginAdmin">Masuk</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Elemen DOM
+        const adminBtn = document.getElementById('adminBtn');
+        const adminPanel = document.getElementById('adminPanel');
+        const adminKeyInput = document.getElementById('adminKey');
+        const adminControls = document.getElementById('adminControls');
+        const loginAdminBtn = document.getElementById('loginAdmin');
+        const cancelAdminBtn = document.getElementById('cancelAdmin');
+        const closeAdminPanelBtn = document.getElementById('closeAdminPanel');
+        const closeAdminPanelBtn2 = document.getElementById('closeAdminPanel2');
+        const qrImageUpload = document.getElementById('qrImageUpload');
+        const previewImage = document.getElementById('previewImage');
+        const saveImageBtn = document.getElementById('saveImage');
+        const resetImageBtn = document.getElementById('resetImage');
+        const qrImage = document.getElementById('qrImage');
+        const notification = document.getElementById('notification');
+        
+        // Elemen untuk fitur teks kustom
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const customTextInput = document.getElementById('customTextInput');
+        const textColor = document.getElementById('textColor');
+        const bgColor = document.getElementById('bgColor');
+        const fontSize = document.getElementById('fontSize');
+        const textPreview = document.getElementById('textPreview');
+        const saveTextBtn = document.getElementById('saveText');
+        const resetTextBtn = document.getElementById('resetText');
+        const customTextContainer = document.getElementById('customTextContainer');
+        const customText = document.getElementById('customText');
+        const textColorPreview = document.getElementById('textColorPreview');
+        const bgColorPreview = document.getElementById('bgColorPreview');
+        
+        // Kunci admin
+        const ADMIN_KEY = "Raja";
+        
+        // Gambar default (placeholder QR code)
+        const DEFAULT_IMAGE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iMTIwIiB5PSIxMjAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9IjE1MCIgeT0iMTYwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiMwMDAiIHRleHQtYW5jaG9rPSJtaWRkbGUiPlFSIFBMQUNFSE9MREVSPC90ZXh0Pjwvc3ZnPg==";
+        
+        // Muat gambar dan teks dari localStorage saat halaman dimuat
+        window.addEventListener('DOMContentLoaded', () => {
+            // Muat gambar
+            const savedImage = localStorage.getItem('qrImage');
+            if (savedImage) {
+                qrImage.src = savedImage;
+            } else {
+                qrImage.src = DEFAULT_IMAGE;
+            }
+            
+            // Muat teks kustom
+            const savedText = localStorage.getItem('customText');
+            const savedTextColor = localStorage.getItem('textColor');
+            const savedBgColor = localStorage.getItem('bgColor');
+            const savedFontSize = localStorage.getItem('fontSize');
+            
+            if (savedText) {
+                customText.textContent = savedText;
+                customTextInput.value = savedText;
+                textPreview.textContent = savedText;
+            }
+            
+            if (savedTextColor) {
+                customText.style.color = savedTextColor;
+                textColor.value = savedTextColor;
+                textColorPreview.style.backgroundColor = savedTextColor;
+                textPreview.style.color = savedTextColor;
+            }
+            
+            if (savedBgColor) {
+                customTextContainer.style.backgroundColor = savedBgColor;
+                bgColor.value = savedBgColor;
+                bgColorPreview.style.backgroundColor = savedBgColor;
+                textPreview.style.backgroundColor = savedBgColor;
+            }
+            
+            if (savedFontSize) {
+                customText.style.fontSize = `${savedFontSize}px`;
+                fontSize.value = savedFontSize;
+                textPreview.style.fontSize = `${savedFontSize}px`;
+            }
+            
+            // Tampilkan atau sembunyikan container teks
+            if (savedText) {
+                customTextContainer.style.display = 'block';
+            } else {
+                customTextContainer.style.display = 'none';
+            }
+        });
+        
+        // Tampilkan panel admin
+        adminBtn.addEventListener('click', () => {
+            adminPanel.style.display = 'flex';
+            adminKeyInput.value = '';
+            adminControls.style.display = 'none';
+        });
+        
+        // Login admin
+        loginAdminBtn.addEventListener('click', () => {
+            if (adminKeyInput.value === ADMIN_KEY) {
+                adminControls.style.display = 'block';
+                showNotification('Berhasil masuk ke panel admin', 'success');
+            } else {
+                showNotification('Kunci admin salah!', 'error');
+            }
+        });
+        
+        // Sistem tab
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Hapus kelas active dari semua tab dan konten
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Tambahkan kelas active ke tab dan konten yang dipilih
+                tab.classList.add('active');
+                document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('active');
+            });
+        });
+        
+        // Tutup panel admin
+        const closeAdminPanel = () => {
+            adminPanel.style.display = 'none';
+            adminKeyInput.value = '';
+            adminControls.style.display = 'none';
+            qrImageUpload.value = '';
+            previewImage.style.display = 'none';
+        };
+        
+        cancelAdminBtn.addEventListener('click', closeAdminPanel);
+        closeAdminPanelBtn.addEventListener('click', closeAdminPanel);
+        closeAdminPanelBtn2.addEventListener('click', closeAdminPanel);
+        
+        // Preview gambar yang diunggah
+        qrImageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    previewImage.src = event.target.result;
+                    previewImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Simpan gambar
+        saveImageBtn.addEventListener('click', () => {
+            if (previewImage.src && previewImage.style.display !== 'none') {
+                // Simpan gambar ke localStorage
+                localStorage.setItem('qrImage', previewImage.src);
+                // Perbarui gambar di halaman utama
+                qrImage.src = previewImage.src;
+                showNotification('Gambar QR berhasil diubah!', 'success');
+                closeAdminPanel();
+            } else {
+                showNotification('Pilih gambar terlebih dahulu!', 'error');
+            }
+        });
+        
+        // Reset gambar ke default
+        resetImageBtn.addEventListener('click', () => {
+            localStorage.removeItem('qrImage');
+            qrImage.src = DEFAULT_IMAGE;
+            showNotification('Gambar QR telah direset ke default', 'success');
+            closeAdminPanel();
+    
